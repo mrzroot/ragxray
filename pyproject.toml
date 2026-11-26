@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ragxray"
+version = "1.0.0"
+description = "Zero-LLM chunk-boundary diagnostics, fracture detector, and BM25 vs trigram retrieval debugger for RAG pipelines."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Mohammadreza Zare (mrzroot)" }]
+requires-python = ">=3.9"
+keywords = ["rag", "chunking", "retrieval", "bm25", "persian", "nlp", "ai", "debugger"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Environment :: Console",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://mrzroot.github.io/ragxray/"
+Repository = "https://github.com/mrzroot/ragxray"
+
+[project.scripts]
+ragxray = "ragxray.cli:main"
+
+[tool.setuptools]
+packages = ["ragxray"]

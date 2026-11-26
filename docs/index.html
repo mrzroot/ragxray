@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ragxray · Zero-LLM Chunk &amp; Retrieval Debugger</title>
+  <meta name="description" content="Diagnose split Markdown tables, broken code fences, orphan headings, and BM25 vs trigram retrieval blind spots without calling an LLM." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet" />
+  <style>
+    :root { --bg:#120e0a; --surface:#1a1510; --surface2:#241d16; --border:#3b2e20; --text:#f6ecd9; --muted:#c9b99f; --accent:#f2b84b; --ok:#5fd6a0; --bad:#ff7a70; }
+    [data-theme="light"] { --bg:#faf4e6; --surface:#fffaf0; --surface2:#f2ead8; --border:#dccfae; --text:#2a1d12; --muted:#5a4631; --accent:#b8470a; --ok:#0b7a4f; --bad:#b42318; }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:"Vazirmatn",system-ui,sans-serif;line-height:1.7}
+    code,pre,textarea{font-family:"JetBrains Mono","Vazirmatn",monospace}
+    .wrap{max-width:1040px;margin:0 auto;padding:28px 20px 64px}
+    header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:28px}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.15rem}
+    .badge{font-size:.78rem;padding:3px 10px;border-radius:999px;background:var(--surface2);border:1px solid var(--border);color:var(--accent)}
+    .controls{display:flex;gap:8px;flex-wrap:wrap}
+    button,.btn{cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:7px 14px;border-radius:10px;font-family:inherit;font-size:.88rem;text-decoration:none}
+    .btn-primary{background:var(--accent);color:#120e0a;border-color:transparent;font-weight:800}
+    [data-theme="light"] .btn-primary{color:#fffaf0}
+    .hero,.lab{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:24px;margin-bottom:20px}
+    pre{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;overflow-x:auto;font-size:.82rem;margin:0}
+    textarea{width:100%;min-height:160px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:12px;font-size:.82rem}
+    footer{margin-top:36px;color:var(--muted);font-size:.86rem;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+    footer a{color:var(--accent)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand"><span>🩻 ragxray</span><span class="badge">v1.0.0 · MIT</span></div>
+      <div class="controls">
+        <button id="langBtn" type="button">فارسی / EN</button>
+        <button id="themeBtn" type="button">☀️ / 🌙</button>
+        <a class="btn" href="https://github.com/mrzroot/ragxray" target="_blank" rel="noopener">GitHub</a>
+        <a class="btn" href="https://mrzroot.github.io/">mrzroot</a>
+      </div>
+    </header>
+    <section class="hero">
+      <h1 data-i18n="title">Zero-LLM Chunk-Boundary &amp; Retrieval Debugger</h1>
+      <p style="color:var(--muted)" data-i18n="lead">Inspect RAG documents before embedding. Spot split Markdown tables, broken code fences, orphan headings, mid-word Persian/English cuts, and BM25 vs trigram blind spots.</p>
+      <pre><code>ragxray inspect docs/ --chunk-size 800 --overlap 100 --html report.html
+ragxray probe docs/ --query "تنظیمات کش" --json</code></pre>
+    </section>
+    <section class="lab">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px">
+        <h2 style="margin:0" data-i18n="labTitle">Browser Chunk X-Ray (Size: <span id="szVal">110</span> chars)</h2>
+        <div style="display:flex;gap:10px;align-items:center">
+          <input id="sz" type="range" min="60" max="320" value="110" />
+          <button class="btn-primary" id="runBtn" type="button" data-i18n="runBtn">Inspect Chunks</button>
+        </div>
+      </div>
+      <textarea id="docIn"></textarea>
+      <pre id="out" style="margin-top:12px"></pre>
+    </section>
+    <footer>
+      <span>ragxray v1.0.0 · <a href="https://github.com/mrzroot/ragxray/releases/tag/v1.0.0">Release v1.0.0</a></span>
+      <span>Built by <a href="https://mrzroot.github.io/">Mohammadreza Zare (mrzroot)</a></span>
+    </footer>
+  </div>
+  <script>
+    const I18N = {
+      en: { title: "Zero-LLM Chunk-Boundary & Retrieval Debugger", lead: "Inspect RAG documents before embedding. Spot split Markdown tables, broken code fences, orphan headings, mid-word Persian/English cuts, and BM25 vs trigram blind spots.", runBtn: "Inspect Chunks" },
+      fa: { title: "دیباگر بدون LLM برای مرز Chunkها و نقاط کور بازیابی در RAG", lead: "پیش از امبدینگ، شکستن جدول‌های Markdown، برش بلوک‌های کد، تیترهای یتیم، برش وسط کلمه فارسی/انگلیسی و نقاط کور BM25 را پیدا کنید.", runBtn: "تحلیل Chunkها" }
+    };
+    const SAMPLE = `# راهنمای پیکربندی\nجدول زیر تنظیمات پیش‌فرض را نشان می‌دهد:\n\n| Key | Value |\n|---|---|\n| timeout | 30s |\n| retries | 3 |\n\n## نمونه کد\n\`\`\`python\ndef connect():\n    return True\n\`\`\``;
+    document.getElementById("docIn").value = SAMPLE;
+    function inspect() {
+      const txt = document.getElementById("docIn").value;
+      const size = Number(document.getElementById("sz").value);
+      document.getElementById("szVal").textContent = size;
+      const step = Math.max(20, size - 15);
+      const chunks = [], issues = [];
+      for (let pos = 0, idx = 0; pos < txt.length; pos += step, idx++) {
+        const end = Math.min(txt.length, pos + size);
+        const t = txt.slice(pos, end);
+        chunks.push({ idx, len: t.length });
+        if ((t.match(/```/g) || []).length % 2 === 1) issues.push({ chunk: idx, kind: "split_code_block" });
+        if (/(?:^|\n)#{1,6}\s+[^\n]+$/.test(t.trimEnd())) issues.push({ chunk: idx, kind: "orphan_heading" });
+        if (end < txt.length && txt[end] && !/\s/.test(txt[end])) issues.push({ chunk: idx, kind: "mid_word_split" });
+        if (end >= txt.length) break;
+      }
+      document.getElementById("out").textContent = JSON.stringify({ chunks: chunks.length, issue_count: issues.length, issues }, null, 2);
+    }
+    document.getElementById("sz").addEventListener("input", inspect);
+    document.getElementById("runBtn").addEventListener("click", inspect);
+    let lang = "en";
+    document.getElementById("langBtn").addEventListener("click", () => {
+      lang = lang === "en" ? "fa" : "en";
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === "fa" ? "rtl" : "ltr";
+      for (const el of document.querySelectorAll("[data-i18n]")) { const k = el.getAttribute("data-i18n"); if (I18N[lang][k]) el.textContent = I18N[lang][k]; }
+    });
+    document.getElementById("themeBtn").addEventListener("click", () => {
+      document.documentElement.setAttribute("data-theme", document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
+    });
+    inspect();
+  </script>
+</body>
+</html>
